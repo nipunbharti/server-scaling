@@ -4,7 +4,11 @@ if(cluster.isMaster){
     var workers = require('os').cpus();
     // console.log('Master cluster setting up ' + workers.length + ' workers.');
     for(var i=0;i<workers.length;i++){
-        cluster.fork();    
+        var worker = cluster.fork();    
+
+        worker.on('message', function(msg){     // Accepting worker messages
+            console.log(msg); 
+        })
     }
 
     cluster.on('online', function(worker){
@@ -16,9 +20,12 @@ if(cluster.isMaster){
         console.log('Starting a new worker.');
         cluster.fork();
     });
+
 }
 else{
     const app = require('express')();
+
+    process.send({messageFromWorker: 'Hello from worker ' + process.pid + '!'}); // Interaction of worker with master
 
     app.get('/*', function(req, res){
         res.send('Process: ' + process.pid + ' says hello!');
